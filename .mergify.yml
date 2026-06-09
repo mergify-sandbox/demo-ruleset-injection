@@ -1,35 +1,37 @@
-# Demo: validate that Mergify injects the GitHub ruleset on `main` as merge
-# protection conditions.
+# Demo: see Mergify render merge protections on a pull request's live
+# "Mergify Merge Protections" check.
 #
-# The queue below declares almost no conditions of its own. Everything that
-# actually gates queuing/merging here is *injected* by Mergify from the GitHub
-# ruleset on the target branch (see rulesets/main-protection.json), because
-# `branch_protection_injection_mode` is set to `queue`:
+# `merge_protections` below mirrors the GitHub ruleset `main protection (demo)`
+# (rulesets/main-protection.json). The conditions are authored here by hand and
+# kept in parity with the ruleset: merge_protections does NOT inject from GitHub
+# rulesets — branch-protection injection is a merge-queue-only feature.
 #
-#   ruleset pull_request.required_approving_review_count: 1
-#       -> injected  #approved-reviews-by >= 1
-#   ruleset pull_request.require_last_push_approval: true
-#       -> injected  github-require-last-push-approval  (gated by the
-#          HONOR_REQUIRE_LAST_PUSH_APPROVAL_FOR_ORGS flag — MRGFY-1900 /
-#          Mergifyio/monorepo#33574 flips it to `*`)
-#   ruleset pull_request.required_review_thread_resolution: true
-#       -> injected  #review-threads-unresolved = 0
-#   ruleset required_status_checks "ci"
-#       -> injected  (check-success=ci or check-neutral=ci or check-skipped=ci)
-#
-# Inspect a PR's Mergify "Summary" check to see the injected conditions live.
+# Real ruleset injection still happens in the queue below
+# (branch_protection_injection_mode: queue), but for an un-queued PR that
+# evaluation surfaces only in the Mergify dashboard event-log, not as a GitHub
+# check:
+#   https://dashboard.mergify.com/event-logs?login=mergify-sandbox&repository=demo-merge-protection
+
+merge_protections:
+  - name: Ruleset parity (demo)
+    description: >-
+      Mirrors the `main protection (demo)` GitHub ruleset so its conditions
+      render on the "Mergify Merge Protections" check. Hand-written, not
+      injected — merge_protections has no branch-protection injection.
+    if:
+      - base = main
+    success_conditions:
+      - "#approved-reviews-by >= 1"
+      - "#review-threads-unresolved = 0"
+      - "check-success = ci"
 
 queue_rules:
   - name: default
-    # `queue`  -> inject ruleset conditions for both queuing and merging
-    # `merge`  -> inject them only at merge time
-    # `none`   -> disable injection (use to A/B the behavior)
+    # `queue` injects ruleset conditions for queuing and merging; `merge` only
+    # at merge time; `none` disables injection.
     branch_protection_injection_mode: queue
     queue_conditions:
       - base = main
-    # Intentionally empty: the merge gate is supplied entirely by the injected
-    # ruleset conditions above. Set injection mode to `none` to see this queue
-    # merge with no protection at all.
     merge_conditions: []
 
 pull_request_rules:
