@@ -1,0 +1,29 @@
+# Demo: Mergify injects the GitHub ruleset on `main` into the merge queue as
+# merge-protection conditions. The queue declares only `base = main`;
+# `branch_protection_injection_mode: queue` pulls the ruleset's conditions in
+# automatically (set it to `none` to compare).
+
+merge_protections_settings:
+  reporting_method: deployments
+
+merge_protections:
+  - name: CI must pass
+    if:
+      - base = main
+    success_conditions:
+      - "check-success = ci"
+
+queue_rules:
+  - name: default
+    branch_protection_injection_mode: queue
+    queue_conditions:
+      - base = main
+    merge_conditions: []
+
+pull_request_rules:
+  - name: Queue PRs labeled "queue"
+    conditions:
+      - base = main
+      - label = queue
+    actions:
+      queue:
