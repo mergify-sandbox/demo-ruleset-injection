@@ -1,3 +1,7 @@
 def feature(x):
-    """Commit A — initial reviewable content."""
-    return x + 1
+    """Commit B — real change by the machine account."""
+    return x * 2
+
+
+def helper(y):
+    return y - 1
