@@ -1,29 +1,21 @@
-# Demo: Mergify injects the GitHub ruleset on `main` into the merge queue as
-# merge-protection conditions. The queue declares only `base = main`;
-# `branch_protection_injection_mode: queue` pulls the ruleset's conditions in
-# automatically (set it to `none` to compare).
-
-merge_protections_settings:
-  reporting_method: deployments
-
-merge_protections:
-  - name: CI must pass
-    if:
-      - base = main
-    success_conditions:
-      - "check-success = ci"
-
-queue_rules:
-  - name: default
-    branch_protection_injection_mode: queue
-    queue_conditions:
-      - base = main
-    merge_conditions: []
+# MRGFY-7814 — validate that Mergify's injected `github-require-last-push-approval`
+# makes the same accept/hold decision GitHub itself makes. Mirrors Depop's
+# `merge-default` rule. The require-last-push-approval condition is injected
+# automatically from the active branch ruleset (require_last_push_approval=true)
+# because Mergify is not a ruleset bypass actor — it is intentionally NOT written
+# here.
 
 pull_request_rules:
-  - name: Queue PRs labeled "queue"
+  - name: merge-default
     conditions:
-      - base = main
-      - label = queue
+      - -draft
+      - -closed
+      - -merged
+      - -conflict
+      - base=main
+      - label=flag:merge
+      - linear-history
+      - github-review-decision=APPROVED
     actions:
-      queue:
+      merge:
+        method: squash
